@@ -1,0 +1,387 @@
+// ─────────────────────────────────────────────────────────────
+// Luxe Estates — Prisma schema
+// SQLite-compatible by default (zero setup). To go to production,
+// change the datasource provider to "postgresql" and set
+// DATABASE_URL — String fields and JSON-as-text work on both.
+// ─────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // change to "postgresql" for production
+  url      = env("DATABASE_URL")
+}
+
+// ── Users & Auth ──────────────────────────────────────────────
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  phone         String?
+  passwordHash  String?
+  avatar        String?
+  role          String    @default("USER") // USER | AGENT | BUILDER | ADMIN
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  savedProperties SavedProperty[]
+  recentlyViewed  RecentlyViewed[]
+  appointments    Appointment[]
+  leads           Lead[]
+  reelComments    ReelComment[]
+  messages        Message[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ── Core: Properties ──────────────────────────────────────────
+model Property {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  title           String
+  subtitle        String?
+  description     String
+  transactionType String   // BUY | RENT | INVEST | COMMERCIAL
+  type            String
+  price           Int
+  pricePerSqft    Int?
+  rentMonthly     Int?
+  deposit         Int?
+  bookingAmount   Int?
+  beds            Int      @default(0)
+  baths           Int      @default(0)
+  area            Int
+  furnishing      String?  // FULLY_FURNISHED | SEMI_FURNISHED | UNFURNISHED
+  possession      String?  // READY_TO_MOVE | UNDER_CONSTRUCTION
+  possessionDate  DateTime?
+
+  city            String
+  locality        String
+  address         String
+  lat             Float
+  lng             Float
+
+  videoUrl        String?
+  tour360Url      String?
+
+  builderId       String?
+  agentId         String?
+  amenities       String   @default("[]") // JSON array as text
+  nearbyPlaces    String   @default("[]") // JSON array as text
+
+  investmentScore       Int?
+  expectedRentalYield   Float?
+  expectedAppreciation  Float?
+
+  verified        Boolean  @default(false)
+  featured        Boolean  @default(false)
+  trending        Boolean  @default(false)
+  luxury          Boolean  @default(false)
+  rating          Float    @default(0)
+  reviews         Int      @default(0)
+  views           Int      @default(0)
+  status          String   @default("PUBLISHED") // DRAFT | PUBLISHED | ARCHIVED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  builder         Builder?         @relation(fields: [builderId], references: [id])
+  agent           Agent?           @relation(fields: [agentId], references: [id])
+  images          PropertyImage[]
+  floorPlans      FloorPlan[]
+  reels           Reel[]
+  savedBy         SavedProperty[]
+  viewedBy        RecentlyViewed[]
+  appointments    Appointment[]
+  leads           Lead[]
+
+  @@index([transactionType])
+  @@index([city])
+  @@index([type])
+  @@index([featured])
+}
+
+model PropertyImage {
+  id         String   @id @default(cuid())
+  propertyId String
+  url        String
+  alt        String?
+  position   Int      @default(0)
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model FloorPlan {
+  id         String   @id @default(cuid())
+  propertyId String
+  label      String
+  area       Int
+  price      Int
+  beds       Int
+  baths      Int
+  image      String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+// ── Builders & Agents ─────────────────────────────────────────
+model Builder {
+  id                String    @id @default(cuid())
+  name              String    @unique
+  logo              String?
+  coverImage        String?
+  established       Int?
+  projectsDelivered Int       @default(0)
+  rating            Float     @default(0)
+  verified          Boolean   @default(false)
+  bio               String?
+  cities            String    @default("[]") // JSON array as text
+  createdAt         DateTime  @default(now())
+
+  properties        Property[]
+  projects          Project[]
+}
+
+model Agent {
+  id              String   @id @default(cuid())
+  name            String
+  avatar          String?
+  phone           String?
+  whatsapp        String?
+  email           String?
+  rating          Float    @default(0)
+  dealsClosed     Int      @default(0)
+  experienceYears Int      @default(0)
+  specialties     String   @default("[]") // JSON array as text
+  verified        Boolean  @default(false)
+  languages       String   @default("[]") // JSON array as text
+  responseTime    String?
+
+  properties      Property[]
+  appointments    Appointment[]
+  leads           Lead[]
+}
+
+// ── Projects ──────────────────────────────────────────────────
+model Project {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  name           String
+  builderId      String?
+  tagline        String?
+  description    String
+  city           String
+  locality       String
+  startingPrice  Int
+  type           String
+  configurations String   @default("[]") // JSON array as text
+  status         String   @default("READY_TO_MOVE")
+  reraId         String?
+  rating         Float    @default(0)
+  unitsSold      Int      @default(0)
+  totalUnits     Int      @default(0)
+  possessionDate DateTime?
+  featured       Boolean  @default(false)
+  trending       Boolean  @default(false)
+  images         String   @default("[]") // JSON array as text
+  amenities      String   @default("[]") // JSON array as text
+  createdAt      DateTime @default(now())
+
+  builder        Builder? @relation(fields: [builderId], references: [id])
+}
+
+// ── Reels ─────────────────────────────────────────────────────
+model Reel {
+  id          String   @id @default(cuid())
+  propertyId  String?
+  videoUrl    String
+  poster      String?
+  caption     String
+  hashtags    String   @default("[]") // JSON array as text
+  music       String?
+  views       Int      @default(0)
+  likes       Int      @default(0)
+  shares      Int      @default(0)
+  saves       Int      @default(0)
+  status      String   @default("PUBLISHED")
+  createdAt   DateTime @default(now())
+
+  property    Property?     @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  comments    ReelComment[]
+
+  @@index([propertyId])
+}
+
+model ReelComment {
+  id        String   @id @default(cuid())
+  reelId    String
+  userId    String?
+  name      String
+  avatar    String?
+  text      String
+  likes     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  reel      Reel     @relation(fields: [reelId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id])
+}
+
+// ── User interactions ─────────────────────────────────────────
+model SavedProperty {
+  id         String   @id @default(cuid())
+  userId     String
+  propertyId String
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, propertyId])
+}
+
+model RecentlyViewed {
+  id         String   @id @default(cuid())
+  userId     String
+  propertyId String
+  viewedAt   DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, propertyId])
+}
+
+model Appointment {
+  id          String   @id @default(cuid())
+  userId      String
+  propertyId  String
+  agentId     String?
+  scheduledAt DateTime
+  status      String   @default("PENDING")
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property    Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  agent       Agent?   @relation(fields: [agentId], references: [id])
+}
+
+// ── CRM: Leads & Messages ─────────────────────────────────────
+model Lead {
+  id         String   @id @default(cuid())
+  name       String
+  email      String?
+  phone      String?
+  source     String   @default("WEBSITE")
+  intent     String?
+  message    String?
+  status     String   @default("NEW")
+  budget     Int?
+  userId     String?
+  propertyId String?
+  agentId    String?
+  notes      String   @default("[]") // JSON array as text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User?     @relation(fields: [userId], references: [id])
+  property   Property? @relation(fields: [propertyId], references: [id])
+  agent      Agent?    @relation(fields: [agentId], references: [id])
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  userId     String
+  fromName   String
+  fromAvatar String?
+  subject    String
+  body       String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ── CMS: Cities, Testimonials, Blogs, Ads ─────────────────────
+model City {
+  id            String  @id @default(cuid())
+  name          String  @unique
+  state         String?
+  country       String?
+  image         String?
+  propertyCount Int     @default(0)
+  trending      Boolean @default(false)
+  lat           Float?
+  lng           Float?
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  avatar    String?
+  role      String?
+  rating    Float    @default(5)
+  text      String
+  city      String?
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model BlogPost {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  title        String
+  excerpt      String
+  content      String
+  cover        String?
+  author       String?
+  authorAvatar String?
+  category     String?
+  readMinutes  Int      @default(5)
+  published    Boolean  @default(true)
+  publishedAt  DateTime @default(now())
+  createdAt    DateTime @default(now())
+}
+
+model Advertisement {
+  id        String    @id @default(cuid())
+  title     String
+  image     String?
+  link      String?
+  position  String
+  active    Boolean   @default(true)
+  startsAt  DateTime  @default(now())
+  endsAt    DateTime?
+}

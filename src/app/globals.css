@@ -1,0 +1,223 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 222 47% 11%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 174 76% 40%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
+
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 44% 10%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 44% 9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 15%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 174 72% 45%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 63% 50%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217 33% 18%;
+    --input: 217 33% 20%;
+    --ring: 217 91% 60%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Hide scrollbars for horizontal carousels */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Snap scroll for reels */
+  .reels-snap {
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .reels-snap::-webkit-scrollbar {
+    display: none;
+  }
+  .reels-snap > * {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/70 dark:bg-ink-900/60 backdrop-blur-xl border border-white/40 dark:border-white/10;
+  }
+
+  .glass-card {
+    @apply bg-white/80 dark:bg-ink-900/70 backdrop-blur-xl border border-black/5 dark:border-white/10 shadow-card;
+  }
+
+  .glass-dark {
+    @apply bg-ink-900/60 backdrop-blur-xl border border-white/10;
+  }
+
+  .container-luxe {
+    @apply mx-auto w-full max-w-[1400px] px-4 sm:px-6 lg:px-8;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-brand-600 via-brand-500 to-teal-500 bg-clip-text text-transparent;
+  }
+
+  .text-gradient-gold {
+    @apply bg-gradient-to-r from-gold-500 to-gold-300 bg-clip-text text-transparent;
+  }
+
+  .skeleton-shimmer {
+    @apply relative overflow-hidden bg-muted;
+  }
+  .skeleton-shimmer::after {
+    @apply absolute inset-0 -translate-x-full;
+    content: "";
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--foreground) / 0.06),
+      transparent
+    );
+    animation: shimmer 1.6s infinite;
+  }
+
+  .btn-glow {
+    @apply shadow-glow;
+  }
+
+  /* Hide number input spinners */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Section rhythm — soft tinted bands for visual cadence */
+  .section-tint {
+    @apply bg-muted/40;
+  }
+  .section-tint-dark {
+    @apply bg-ink-950 text-white;
+  }
+  .section-tint-gradient {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--primary) / 0.08), transparent),
+      hsl(var(--background));
+  }
+
+  /* Premium card border with subtle gradient ring */
+  .card-premium {
+    @apply relative overflow-hidden rounded-3xl border border-black/[0.06] bg-card shadow-card transition-all duration-500;
+  }
+  .card-premium::before {
+    content: "";
+    @apply pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-500;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.12), transparent 40%);
+  }
+  .card-premium:hover {
+    @apply shadow-card-hover -translate-y-1.5;
+  }
+  .card-premium:hover::before {
+    @apply opacity-100;
+  }
+}
+
+@layer utilities {
+  .mask-fade-r {
+    -webkit-mask-image: linear-gradient(to right, black 80%, transparent);
+    mask-image: linear-gradient(to right, black 80%, transparent);
+  }
+  .mask-fade-b {
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 30%);
+    mask-image: linear-gradient(to bottom, transparent, black 30%);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+  background-clip: padding-box;
+}
